@@ -31,6 +31,7 @@ services:
     image: frappe/bench:latest
     restart: always
     command: bash /workspace/crm/docker/init_prod.sh
+    user: root
     environment:
       - SHELL=/bin/bash
       - DB_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-change_me_in_production}
