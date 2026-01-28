@@ -1,0 +1,63 @@
+name: crm-prod
+services:
+  mariadb:
+    image: mariadb:10.8
+    restart: always
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+      - --skip-innodb-read-only-compressed
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-change_me_in_production}
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    networks:
+      - crm-network
+
+  redis-cache:
+    image: redis:alpine
+    restart: always
+    networks:
+      - crm-network
+
+  redis-queue:
+    image: redis:alpine
+    restart: always
+    networks:
+      - crm-network
+
+  frappe:
+    image: frappe/bench:latest
+    restart: always
+    command: bash /workspace/crm/docker/init_prod.sh
+    environment:
+      - SHELL=/bin/bash
+      - DB_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-change_me_in_production}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
+      - SITE_NAME=${SITE_NAME:-crm.localhost}
+    working_dir: /home/frappe
+    volumes:
+      - ..:/workspace/crm
+      - bench-data:/home/frappe/frappe-bench
+      - sites-data:/home/frappe/frappe-bench/sites
+      - logs-data:/home/frappe/frappe-bench/logs
+    ports:
+      - "${FRAPPE_PORT:-8000}:8000"
+      - "${SOCKETIO_PORT:-9000}:9000"
+    depends_on:
+      - mariadb
+      - redis-cache
+      - redis-queue
+    networks:
+      - crm-network
+
+volumes:
+  mariadb-data:
+  bench-data:
+  sites-data:
+  logs-data:
+
+networks:
+  crm-network:
+    driver: bridge
