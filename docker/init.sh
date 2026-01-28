@@ -10,6 +10,7 @@ fi
 BENCH_DIR="/home/frappe/frappe-bench"
 SITE_NAME="crm.localhost"
 WORKSPACE_DIR="/workspace/crm"
+DB_ROOT_PASSWORD="${DB_ROOT_PASSWORD:-123}"
 
 # Docker bind-mounts can trigger git's "dubious ownership" protection.
 git config --global --add safe.directory "${WORKSPACE_DIR}" || true
@@ -48,7 +49,7 @@ fi
 if [ ! -f "${BENCH_DIR}/sites/${SITE_NAME}/site_config.json" ]; then
     bench new-site "${SITE_NAME}" \
         --force \
-        --mariadb-root-password 123 \
+        --mariadb-root-password "${DB_ROOT_PASSWORD}" \
         --admin-password admin \
         --no-mariadb-socket
 fi

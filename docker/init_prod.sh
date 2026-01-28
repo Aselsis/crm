@@ -30,16 +30,27 @@ ADMIN_PASSWORD="${ADMIN_PASSWORD:-admin}"
 git config --global --add safe.directory "${WORKSPACE_DIR}" || true
 git config --global --add safe.directory "${BENCH_DIR}/apps/crm" || true
 
-# Wait for MariaDB to be ready
+# Wait for MariaDB to be ready (and credentials to be correct)
 echo "Waiting for MariaDB..."
+db_ready=0
 for i in {1..30}; do
     if mysqladmin ping -h mariadb -u root -p"${DB_ROOT_PASSWORD}" --silent 2>/dev/null; then
+        db_ready=1
         echo "MariaDB is ready!"
         break
     fi
     echo "Waiting for MariaDB... ($i/30)"
     sleep 2
 done
+
+if [ "${db_ready}" -ne 1 ]; then
+    echo "ERROR: Could not connect to MariaDB as root."
+    echo "Either MariaDB is not reachable or DB_ROOT_PASSWORD is wrong for the existing DB volume."
+    echo "Fix options:"
+    echo "  1) Set DB_ROOT_PASSWORD to the correct existing root password (same value used when the mariadb-data volume was first created)."
+    echo "  2) Reset the DB volume (DATA LOSS): docker compose -f docker/docker-compose.prod.yml down -v"
+    exit 1
+fi
 
 cd /home/frappe
 

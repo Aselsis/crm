@@ -21,6 +21,7 @@ services:
     user: root
     environment:
       - SHELL=/bin/bash
+      - DB_ROOT_PASSWORD=123
     working_dir: /home/frappe
     volumes:
       - ..:/workspace/crm
