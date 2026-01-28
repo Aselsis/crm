@@ -80,7 +80,7 @@ if [ ! -f "${BENCH_DIR}/sites/${SITE_NAME}/site_config.json" ]; then
         --force \
         --mariadb-root-password "${DB_ROOT_PASSWORD}" \
         --admin-password "${ADMIN_PASSWORD}" \
-        --no-mariadb-socket
+        --mariadb-user-host-login-scope='%'
 fi
 
 # Install CRM app if not installed

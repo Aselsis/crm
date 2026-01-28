@@ -10,6 +10,7 @@ services:
       - --skip-innodb-read-only-compressed
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-change_me_in_production}
+      MYSQL_ROOT_HOST: '%'
     volumes:
       - mariadb-data:/var/lib/mysql
     networks:
