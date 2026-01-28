@@ -4,8 +4,19 @@ set -euo pipefail
 # Production init script for Frappe CRM
 
 if [ "${1:-}" != "--as-frappe" ] && [ "$(id -u)" -eq 0 ]; then
-    mkdir -p /home/frappe/frappe-bench
-    chown -R frappe:frappe /home/frappe/frappe-bench
+    echo "Running as root, setting up permissions..."
+
+    # Create all necessary directories
+    mkdir -p /home/frappe/frappe-bench/apps
+    mkdir -p /home/frappe/frappe-bench/sites
+    mkdir -p /home/frappe/frappe-bench/logs
+    mkdir -p /home/frappe/frappe-bench/config
+    mkdir -p /home/frappe/frappe-bench/archived/apps
+
+    # Set ownership for entire frappe home
+    chown -R frappe:frappe /home/frappe
+
+    # Switch to frappe user and continue
     exec su - frappe -c "bash /workspace/crm/docker/init_prod.sh --as-frappe"
 fi
 
@@ -18,6 +29,17 @@ ADMIN_PASSWORD="${ADMIN_PASSWORD:-admin}"
 # Docker bind-mounts can trigger git's "dubious ownership" protection.
 git config --global --add safe.directory "${WORKSPACE_DIR}" || true
 git config --global --add safe.directory "${BENCH_DIR}/apps/crm" || true
+
+# Wait for MariaDB to be ready
+echo "Waiting for MariaDB..."
+for i in {1..30}; do
+    if mysqladmin ping -h mariadb -u root -p"${DB_ROOT_PASSWORD}" --silent 2>/dev/null; then
+        echo "MariaDB is ready!"
+        break
+    fi
+    echo "Waiting for MariaDB... ($i/30)"
+    sleep 2
+done
 
 cd /home/frappe
 
@@ -84,9 +106,6 @@ bench --site "${SITE_NAME}" clear-cache
 
 # Set default site
 bench use "${SITE_NAME}"
-
-# Setup nginx config for frappe
-bench setup nginx --yes
 
 echo "========================================"
 echo "Production setup complete!"
