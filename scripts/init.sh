@@ -1,6 +1,6 @@
-#!bin/bash
+#!/bin/bash
 
-set -e
+set -euo pipefail
 
 if [[ -f "/workspaces/frappe_codespace/frappe-bench/apps/frappe" ]]
 then
@@ -20,6 +20,7 @@ cd /workspace
 bench init \
     --ignore-exist \
     --skip-redis-config-generation \
+    --python python3.11 \
     frappe-bench
 
 cd frappe-bench

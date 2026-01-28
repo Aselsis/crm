@@ -1,4 +1,3 @@
-import '../../../frappe/frappe/public/js/lib/posthog.js'
 import { createResource } from 'frappe-ui'
 
 declare global {
@@ -20,6 +19,36 @@ interface CaptureOptions {
 }
 
 let posthog: typeof window.posthog = window.posthog
+let posthogLoadPromise: Promise<void> | null = null
+
+function ensurePosthogLoaded() {
+  if (typeof window === 'undefined') return Promise.resolve()
+  if (window.posthog?.init) return Promise.resolve()
+
+  if (posthogLoadPromise) return posthogLoadPromise
+
+  posthogLoadPromise = new Promise<void>((resolve) => {
+    const existing = document.querySelector(
+      'script[data-crm-posthog-loader="1"]',
+    ) as HTMLScriptElement | null
+
+    if (existing) {
+      existing.addEventListener('load', () => resolve(), { once: true })
+      existing.addEventListener('error', () => resolve(), { once: true })
+      return
+    }
+
+    const script = document.createElement('script')
+    script.dataset.crmPosthogLoader = '1'
+    script.async = true
+    script.src = '/assets/frappe/js/lib/posthog.js'
+    script.addEventListener('load', () => resolve(), { once: true })
+    script.addEventListener('error', () => resolve(), { once: true })
+    document.head.appendChild(script)
+  })
+
+  return posthogLoadPromise
+}
 
 // Posthog Settings
 let posthogSettings = createResource({
@@ -42,19 +71,24 @@ let isTelemetryEnabled = () => {
 function initPosthog(ps: PosthogSettings) {
   if (!isTelemetryEnabled()) return
 
-  posthog.init(ps.posthog_project_id, {
-    api_host: ps.posthog_host,
-    person_profiles: 'identified_only',
-    autocapture: false,
-    capture_pageview: true,
-    capture_pageleave: true,
-    enable_heatmaps: false,
-    disable_session_recording: true,
-    advanced_disable_decide: true,
-    loaded: (ph: typeof posthog) => {
-      window.posthog = ph
-      ph.identify(window.location.hostname)
-    },
+  ensurePosthogLoaded().then(() => {
+    posthog = window.posthog
+    if (!posthog?.init) return
+
+    posthog.init(ps.posthog_project_id, {
+      api_host: ps.posthog_host,
+      person_profiles: 'identified_only',
+      autocapture: false,
+      capture_pageview: true,
+      capture_pageleave: true,
+      enable_heatmaps: false,
+      disable_session_recording: true,
+      advanced_disable_decide: true,
+      loaded: (ph: typeof posthog) => {
+        window.posthog = ph
+        ph.identify(window.location.hostname)
+      },
+    })
   })
 }
 

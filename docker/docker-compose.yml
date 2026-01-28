@@ -1,4 +1,3 @@
-version: "3.7"
 name: crm
 services:
   mariadb:
@@ -18,15 +17,18 @@ services:
 
   frappe:
     image: frappe/bench:latest
-    command: bash /workspace/init.sh
+    command: bash /workspace/crm/docker/init.sh
+    user: root
     environment:
       - SHELL=/bin/bash
     working_dir: /home/frappe
     volumes:
-      - .:/workspace
+      - ..:/workspace/crm
+      - bench-data:/home/frappe/frappe-bench
     ports:
       - 8000:8000
       - 9000:9000
 
 volumes:
   mariadb-data:
+  bench-data:

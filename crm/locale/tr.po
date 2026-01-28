@@ -1087,7 +1087,7 @@ msgstr ""
 
 #: frontend/src/components/Layouts/AppSidebar.vue:556
 msgid "Call log"
-msgstr ""
+msgstr "Çağrı Geçmişi"
 
 #: frontend/src/components/Telephony/CallUI.vue:10
 msgid "Call using {0}"
@@ -4167,15 +4167,15 @@ msgstr "Hiçbir değişiklik yapılmadı"
 #: frontend/src/components/Modals/SidePanelModal.vue:51
 #: frontend/src/pages/Deal.vue:277 frontend/src/pages/MobileDeal.vue:209
 msgid "No contacts added"
-msgstr ""
+msgstr "Kişi eklenmedi"
 
 #: frontend/src/pages/Deal.vue:263
 msgid "No details added"
-msgstr ""
+msgstr Detay eklenmedi""
 
 #: frontend/src/pages/Deal.vue:95 frontend/src/pages/Lead.vue:141
 msgid "No email set"
-msgstr ""
+msgstr "Email Ayarlanmadı"
 
 #: frontend/src/components/Settings/EmailTemplate/EmailTemplates.vue:48
 msgid "No email templates found"
@@ -4516,7 +4516,7 @@ msgstr ""
 #: frontend/src/pages/MobileOrganization.vue:216
 #: frontend/src/pages/Organization.vue:258
 msgid "Organizations"
-msgstr ""
+msgstr "Firmalar"
 
 #: frontend/src/components/Calendar/CalendarEventPanel.vue:107
 msgid "Organizer"
@@ -4524,7 +4524,7 @@ msgstr ""
 
 #: frontend/src/components/Layouts/AppSidebar.vue:575
 msgid "Other features"
-msgstr ""
+msgstr "Diğer Özellikler"
 
 #. Label of the organization_tab (Tab Break) field in DocType 'CRM Lead'
 #: crm/fcrm/doctype/crm_lead/crm_lead.json
