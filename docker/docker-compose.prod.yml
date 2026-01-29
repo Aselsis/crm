@@ -1,4 +1,5 @@
 name: crm-prod
+
 services:
   mariadb:
     image: mariadb:10.8
@@ -9,22 +10,27 @@ services:
       - --skip-character-set-client-handshake
       - --skip-innodb-read-only-compressed
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-change_me_in_production}
-      MYSQL_ROOT_HOST: '%'
+      MYSQL_ROOT_PASSWORD: change_me_in_production
+      MYSQL_ROOT_HOST: "%"
+      MYSQL_ALLOW_EMPTY_PASSWORD: yes
     volumes:
-      - mariadb-data:/var/lib/mysql
+      - /home/aselsis/crm/volumes/mariadb:/var/lib/mysql
     networks:
       - crm-network
 
   redis-cache:
     image: redis:alpine
     restart: always
+    volumes:
+      - /home/aselsis/crm/volumes/redis-cache:/data
     networks:
       - crm-network
 
   redis-queue:
     image: redis:alpine
     restart: always
+    volumes:
+      - /home/aselsis/crm/volumes/redis-queue:/data
     networks:
       - crm-network
 
@@ -35,30 +41,25 @@ services:
     user: root
     environment:
       - SHELL=/bin/bash
-      - DB_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-change_me_in_production}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
+      - DB_ROOT_USER=frappe_admin
+      - DB_ROOT_PASSWORD=change_me_in_production
+      - ADMIN_PASSWORD=HelloWorldNoSpecialChars
       - SITE_NAME=${SITE_NAME:-crm.localhost}
     working_dir: /home/frappe
     volumes:
       - ..:/workspace/crm
-      - bench-data:/home/frappe/frappe-bench
-      - sites-data:/home/frappe/frappe-bench/sites
-      - logs-data:/home/frappe/frappe-bench/logs
+      - /home/aselsis/crm/volumes/bench:/home/frappe/frappe-bench
+      - /home/aselsis/crm/volumes/sites:/home/frappe/frappe-bench/sites
+      - /home/aselsis/crm/volumes/logs:/home/frappe/frappe-bench/logs
     ports:
-      - "${FRAPPE_PORT:-8000}:8000"
-      - "${SOCKETIO_PORT:-9000}:9000"
+      - "${FRAPPE_PORT:-8076}:8000"
+      - "${SOCKETIO_PORT:-9076}:9000"
     depends_on:
       - mariadb
       - redis-cache
       - redis-queue
     networks:
       - crm-network
-
-volumes:
-  mariadb-data:
-  bench-data:
-  sites-data:
-  logs-data:
 
 networks:
   crm-network:
