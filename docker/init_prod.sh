@@ -84,14 +84,52 @@ else
     bench get-app --overwrite --soft-link "${WORKSPACE_DIR}"
 fi
 
-# Create site if not exists
-if [ ! -f "${BENCH_DIR}/sites/${SITE_NAME}/site_config.json" ]; then
+# Create site if not exists, or recreate if database connection is broken
+SITE_DIR="${BENCH_DIR}/sites/${SITE_NAME}"
+SITE_CONFIG="${SITE_DIR}/site_config.json"
+
+create_site() {
     echo "Creating new site: ${SITE_NAME}"
     bench new-site "${SITE_NAME}" \
         --force \
         --mariadb-root-password "${DB_ROOT_PASSWORD}" \
         --admin-password "${ADMIN_PASSWORD}" \
         --no-mariadb-socket
+}
+
+if [ ! -f "${SITE_CONFIG}" ]; then
+    create_site
+else
+    # Site config exists, verify database connection works
+    echo "Site config exists, verifying database connection..."
+
+    # Extract database name from site_config.json
+    DB_NAME=$(grep -o '"db_name"[[:space:]]*:[[:space:]]*"[^"]*"' "${SITE_CONFIG}" | cut -d'"' -f4)
+
+    if [ -n "${DB_NAME}" ]; then
+        # Test if we can connect to the database
+        if ! mysql -h mariadb -u root -p"${DB_ROOT_PASSWORD}" -e "SELECT 1 FROM ${DB_NAME}.tabDefaultValue LIMIT 1" 2>/dev/null; then
+            echo "WARNING: Database connection failed for existing site."
+            echo "The site config exists but the database '${DB_NAME}' or its user is not accessible."
+            echo "Removing old site config and recreating site..."
+
+            # Backup old site config
+            mv "${SITE_DIR}" "${SITE_DIR}.backup.$(date +%Y%m%d%H%M%S)" 2>/dev/null || true
+
+            # Drop the old database if it exists (clean slate)
+            mysql -h mariadb -u root -p"${DB_ROOT_PASSWORD}" -e "DROP DATABASE IF EXISTS \`${DB_NAME}\`" 2>/dev/null || true
+            mysql -h mariadb -u root -p"${DB_ROOT_PASSWORD}" -e "DROP USER IF EXISTS '${DB_NAME}'@'%'" 2>/dev/null || true
+
+            create_site
+        else
+            echo "Database connection verified successfully."
+        fi
+    else
+        echo "WARNING: Could not extract db_name from site_config.json"
+        echo "Recreating site..."
+        mv "${SITE_DIR}" "${SITE_DIR}.backup.$(date +%Y%m%d%H%M%S)" 2>/dev/null || true
+        create_site
+    fi
 fi
 
 # Install CRM app if not installed
